@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Descargo - DMS Ricocan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+
+<div class="w-full max-w-xl bg-white p-8 rounded-xl shadow-xl">
+    <h2 class="text-2xl font-bold text-center text-blue-700 mb-6">
+        ✏ Editar Descargo del Reporte
+    </h2>
+
+    <form th:action="@{/reportes/editar/{id}(id=${evento.id})}" method="post" class="space-y-6">
+
+        <!-- Campos informativos NO editables -->
+        <div>
+            <label class="block text-sm font-medium text-gray-600">Planta:</label>
+            <p class="mt-1 text-gray-800 font-semibold" th:text="${evento.planta}">-</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-600">Área:</label>
+            <p class="mt-1 text-gray-800 font-semibold" th:text="${evento.area}">-</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-600">Sección:</label>
+            <p class="mt-1 text-gray-800 font-semibold" th:text="${evento.seccion}">-</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-600">Descripción:</label>
+            <p class="mt-1 text-gray-800" th:text="${evento.descripcion}">-</p>
+        </div>
+
+        <!-- Campo de Descargo -->
+        <div>
+            <label for="descargo" class="block text-sm font-medium text-gray-700">Descargo:</label>
+            <textarea id="descargo" name="descargo" rows="4" required
+                      th:text="${evento.descargo}"
+                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+        </div>
+
+        <!-- Fecha de Levantamiento -->
+        <div>
+            <label for="fechaLevantamiento" class="block text-sm font-medium text-gray-700">Fecha de levantamiento:</label>
+            <input type="date" id="fechaLevantamiento" name="fechaLevantamiento" required
+                   th:value="${evento.fechaLevantamiento}"
+                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        </div>
+
+        <!-- Botones -->
+        <div class="flex justify-between items-center pt-4">
+            <a href="/reportes/todos"
+               class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md shadow-sm">
+                ← Cancelar
+            </a>
+            <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-sm">
+                💾 Guardar Cambios
+            </button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

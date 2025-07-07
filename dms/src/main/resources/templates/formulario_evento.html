@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Formulario de Reporte Diario</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script th:inline="javascript">
+        const rolUsuario = /*[[${usuario.rol}]]*/ 'NONE';
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const plantaSelect = document.getElementById("planta");
+            const areaSelect = document.getElementById("area");
+            const seccionSelect = document.getElementById("seccion");
+            const areaNombreInput = document.getElementById("areaNombre");
+            const camposJefatura = document.getElementById("campos-jefatura");
+
+            plantaSelect.addEventListener("change", function () {
+                const plantaId = this.value;
+                fetch(`/reportes/areas/${plantaId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        areaSelect.innerHTML = '<option value="">Seleccione un área</option>';
+                        data.forEach(area => {
+                            const option = new Option(area.area, area.id);
+                            option.setAttribute("data-nombre", area.area);
+                            areaSelect.appendChild(option);
+                        });
+                        seccionSelect.innerHTML = '<option value="">Seleccione una sección</option>';
+                        areaNombreInput.value = "";
+                    });
+            });
+
+            areaSelect.addEventListener("change", function () {
+                const selectedOption = areaSelect.options[areaSelect.selectedIndex];
+                const areaId = selectedOption.value;
+                const areaNombre = selectedOption.getAttribute("data-nombre");
+                areaNombreInput.value = areaNombre;
+
+                fetch(`/reportes/secciones/${areaId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        seccionSelect.innerHTML = '<option value="">Seleccione una sección</option>';
+                        data.forEach(seccion => {
+                            const option = new Option(seccion.seccion, seccion.seccion);
+                            seccionSelect.appendChild(option);
+                        });
+                    });
+
+                if (areaNombre === "Producción" && rolUsuario === "JEFATURA") {
+                    camposJefatura.style.display = "block";
+                } else {
+                    camposJefatura.style.display = "none";
+                }
+            });
+        });
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<div class="w-full max-w-3xl bg-white p-8 rounded-xl shadow-xl">
+    <h2 class="text-2xl font-bold text-center text-blue-700 mb-6">📝 Reporte Diario de Evento</h2>
+
+    <form th:action="@{/reportes/llenar}" method="post" th:object="${evento}" class="space-y-4">
+        <!-- Planta y Área -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="planta" class="block text-sm font-medium text-gray-700">Planta:</label>
+                <select id="planta" name="planta" required
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Selecciona una Planta</option>
+                    <th:block th:each="planta : ${plantas}">
+                        <option th:value="${planta.id}" th:text="${planta.nombre}"></option>
+                    </th:block>
+                </select>
+            </div>
+
+            <div>
+                <label for="area" class="block text-sm font-medium text-gray-700">Área:</label>
+                <select id="area" required
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Seleccione un área</option>
+                    <th:block th:each="area : ${areas}">
+                        <option th:value="${area.id}" th:text="${area.area}" th:data-nombre="${area.area}"></option>
+                    </th:block>
+                </select>
+                <input type="hidden" id="areaNombre" name="area">
+            </div>
+        </div>
+
+        <!-- Sección -->
+        <div>
+            <label for="seccion" class="block text-sm font-medium text-gray-700">Sección:</label>
+            <select id="seccion" name="seccion" required
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <option disabled selected>Seleccione una sección</option>
+            </select>
+        </div>
+
+        <!-- Ubicación -->
+        <div>
+            <label for="ubicacion" class="block text-sm font-medium text-gray-700">Ubicación:</label>
+            <input type="text" name="ubicacion" required
+                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"/>
+        </div>
+
+        <!-- Fecha y Hora -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="fecha" class="block text-sm font-medium text-gray-700">Fecha:</label>
+                <input type="date" id="fecha" name="fecha" readonly required
+                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-600"/>
+            </div>
+            <div>
+                <label for="hora" class="block text-sm font-medium text-gray-700">Hora:</label>
+                <input type="time" id="hora" name="hora" readonly required
+                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-600"/>
+            </div>
+        </div>
+
+        <!-- Descripción -->
+        <div>
+            <label for="descripcion" class="block text-sm font-medium text-gray-700">Descripción del evento:</label>
+            <textarea name="descripcion" rows="4" required
+                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+        </div>
+
+        <!-- Campos para Jefatura -->
+        <div id="campos-jefatura" style="display:none;">
+            <div class="mt-4">
+                <label for="descargo" class="block text-sm font-medium text-gray-700">Descargo:</label>
+                <textarea name="descargo" id="descargo" rows="3"
+                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          th:text="${evento.descargo}"></textarea>
+            </div>
+            <div class="mt-4">
+                <label for="fecha_levantamiento" class="block text-sm font-medium text-gray-700">Fecha de levantamiento:</label>
+                <input type="date" name="fechaLevantamiento" id="fecha_levantamiento"
+                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                       th:value="${evento.fechaLevantamiento}"/>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex justify-between items-center pt-4">
+            <a href="/dashboard"
+               class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md shadow-sm">
+                ← Cancelar
+            </a>
+            <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md shadow-sm">
+                Guardar Reporte
+            </button>
+        </div>
+    </form>
+</div>
+</body>
+</html>

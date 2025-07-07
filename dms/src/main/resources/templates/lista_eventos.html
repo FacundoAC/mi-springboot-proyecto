@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reportes - DMS Ricocan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800 font-sans">
+
+<div class="container mx-auto px-4 py-10">
+    <div class="bg-white shadow-xl rounded-xl overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-200">
+            <h2 class="text-2xl font-bold text-blue-800 text-center">📋 Reportes de Seguridad Registrados</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full table-auto divide-y divide-gray-200">
+                <thead class="bg-blue-700 text-white">
+                <tr>
+                    <th class="px-4 py-2 text-sm font-medium">ID</th>
+                    <th class="px-4 py-2 text-sm font-medium">Planta</th>
+                    <th class="px-4 py-2 text-sm font-medium">Área</th>
+                    <th class="px-4 py-2 text-sm font-medium">Sección</th>
+                    <th class="px-4 py-2 text-sm font-medium">Ubicación</th>
+                    <th class="px-4 py-2 text-sm font-medium">Fecha</th>
+                    <th class="px-4 py-2 text-sm font-medium">Hora</th>
+                    <th class="px-4 py-2 text-sm font-medium">Descripción</th>
+                    <th class="px-4 py-2 text-sm font-medium">Usuario</th>
+                    <th class="px-4 py-2 text-sm font-medium">Descargo</th>
+                    <th class="px-4 py-2 text-sm font-medium">Lev.</th>
+                    <th class="px-4 py-2 text-sm font-medium">Estado</th>
+                    <th class="px-4 py-2 text-sm font-medium">Acciones</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 bg-white text-center text-sm">
+                <tr th:each="evento : ${eventos}" class="hover:bg-gray-50">
+                    <td th:text="${evento.id}" class="px-3 py-2"></td>
+                    <td th:text="${evento.planta}" class="px-3 py-2"></td>
+                    <td th:text="${evento.area}" class="px-3 py-2"></td>
+                    <td th:text="${evento.seccion}" class="px-3 py-2"></td>
+                    <td th:text="${evento.ubicacion}" class="px-3 py-2"></td>
+                    <td th:text="${evento.fecha}" class="px-3 py-2"></td>
+                    <td th:text="${evento.hora}" class="px-3 py-2"></td>
+                    <td th:text="${evento.descripcion}" class="px-3 py-2"></td>
+                    <td th:text="${evento.usuario.username}" class="px-3 py-2"></td>
+                    <td th:text="${evento.descargo != null ? evento.descargo : '—'}" class="px-3 py-2"></td>
+                    <td th:text="${evento.fechaLevantamiento != null ? evento.fechaLevantamiento : '—'}" class="px-3 py-2"></td>
+                    <td th:text="${evento.estado != null ? evento.estado : 'PENDIENTE'}" class="px-3 py-2"></td>
+                    <td class="px-3 py-2">
+                        <div class="flex flex-wrap justify-center gap-1">
+                            <!-- PDF para todos -->
+                            <a th:href="@{/reportes/exportar-pdf/{id}(id=${evento.id})}"
+                               class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs">📄 PDF</a>
+
+                            <!-- Editar Descargo (solo JEFATURA) -->
+                            <a th:if="${usuario.rol == 'JEFATURA'}"
+                               th:href="@{/reportes/editar/{id}(id=${evento.id})}"
+                               class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
+                                ✏ Editar Descargo
+                            </a>
+
+                            <!-- Levantar con AJAX (solo AUXSEGURIDAD) -->
+                            <button th:if="${usuario.rol == 'AUXSEGURIDAD'}"
+                                    th:data-id="${evento.id}"
+                                    class="levantar-btn bg-yellow-400 hover:bg-yellow-500 text-black px-2 py-1 rounded text-xs">
+                                ✔ Levantar
+                            </button>
+
+                            <!-- Rechazar (solo AUXSEGURIDAD) -->
+                            <form th:if="${usuario.rol == 'AUXSEGURIDAD'}"
+                                  th:action="@{/reportes/cambiar-estado/{id}(id=${evento.id})}" method="post">
+                                <input type="hidden" name="estado" value="RECHAZADO"/>
+                                <button type="submit"
+                                        class="bg-gray-600 hover:bg-gray-700 text-white px-2 py-1 rounded text-xs">
+                                    ✖ Rechazar
+                                </button>
+                            </form>
+
+                            <!-- Eliminar (solo ADMIN) -->
+                            <form th:if="${usuario.rol == 'ADMIN'}"
+                                  th:action="@{/reportes/eliminar/{id}(id=${evento.id})}" method="post"
+                                  onsubmit="return confirm('¿Eliminar este reporte?');">
+                                <button type="submit"
+                                        class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">
+                                    🗑
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="px-6 py-4 flex flex-wrap justify-center gap-3 border-t mt-4">
+            <a href="/dashboard" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">← Volver</a>
+            <a href="/reportes/exportar-excel" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                📥 Exportar Excel
+            </a>
+
+            <form th:if="${usuario.rol == 'ADMIN'}"
+                  th:action="@{/reportes/eliminar-todos}" method="post"
+                  onsubmit="return confirm('¿Eliminar todos los reportes?');">
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">
+                    🧹 Reiniciar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const botones = document.querySelectorAll(".levantar-btn");
+
+        botones.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const id = btn.getAttribute("data-id");
+
+                fetch(`/reportes/cambiar-estado/${id}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: "estado=LEVANTADO"
+                })
+                .then(res => {
+                    if (res.ok) {
+                        // Oculta el botón tras éxito
+                        btn.remove();
+                    } else {
+                        alert("Error al levantar el reporte.");
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error al conectar con el servidor.");
+                });
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
